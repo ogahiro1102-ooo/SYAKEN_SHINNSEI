@@ -3,168 +3,182 @@
 <head>
   <meta charset="UTF-8">
   <title>社内検査 申請フォーム</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- ===== CSS ===== -->
   <style>
-    body { font-family: sans-serif; padding: 16px; }
-    label { display: block; margin-top: 12px; }
+    body {
+      font-family: sans-serif;
+      background: #f7f7f7;
+      margin: 0;
+      padding: 16px;
+    }
+    main {
+      max-width: 480px;
+      margin: auto;
+      background: #fff;
+      padding: 16px;
+      border-radius: 8px;
+    }
+    label {
+      display: block;
+      margin-bottom: 12px;
+    }
     input, select, textarea, button {
       width: 100%;
-      padding: 8px;
+      padding: 6px;
       margin-top: 4px;
+    }
+    button {
+      background: #1976d2;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
       font-size: 16px;
     }
-    button { margin-top: 16px; }
-    .box {
-      border: 1px solid #ccc;
-      padding: 12px;
-      margin-top: 20px;
+    #message {
+      margin-top: 12px;
+      font-weight: bold;
     }
   </style>
 </head>
+
 <body>
+<main>
+  <h1>社内検査 申請フォーム</h1>
 
-<h2>社内検査 申請フォーム</h2>
+  <form id="applyForm">
+    <label>
+      協力業者名
+      <input type="text" id="vendor" required>
+    </label>
 
-<!-- ===== 申請フォーム ===== -->
-<div class="box">
+    <label>
+      検査日
+      <input type="date" id="date">
+    </label>
 
-  <label>協力業者名
-    <input id="vendor" required>
-  </label>
+    <label>
+      検査時間
+      <select id="hour" required>
+        <option value="">選択してください</option>
+        <option>08:00</option>
+        <option>09:00</option>
+        <option>10:00</option>
+        <option>11:00</option>
+        <option>12:00</option>
+        <option>13:00</option>
+        <option>14:00</option>
+        <option>15:00</option>
+        <option>16:00</option>
+        <option>17:00</option>
+      </select>
+    </label>
 
-  <label>検査日
-    <input type="date" id="date" required>
-  </label>
+    <label>
+      検査場所
+      <select id="placeBase" required>
+        <option value="">選択してください</option>
+        <option>A棟</option>
+        <option>B棟</option>
+        <option>C棟</option>
+        <option>ブロック置き場</option>
+        <option>SUB</option>
+        <option>その他</option>
+      </select>
+    </label>
 
-  <label>希望検査時間（1時間単位）
-    <select id="hour" required>
-      <option value="">選択してください</option>
-      <option value="08:00">08:00</option>
-      <option value="09:00">09:00</option>
-      <option value="10:00">10:00</option>
-      <option value="11:00">11:00</option>
-      <option value="12:00">12:00</option>
-      <option value="13:00">13:00</option>
-      <option value="14:00">14:00</option>
-      <option value="15:00">15:00</option>
-      <option value="16:00">16:00</option>
-      <option value="17:00">17:00</option>
-    </select>
-  </label>
+    <label id="placeOtherArea" style="display:none;">
+      検査場所（自由記述）
+      <input type="text" id="placeOther">
+    </label>
 
-  <label>検査場所
-    <select id="placeBase" required onchange="toggleOtherPlace()">
-      <option value="">選択してください</option>
-      <option value="A棟">A棟</option>
-      <option value="B棟">B棟</option>
-      <option value="C棟">C棟</option>
-      <option value="ブロック置き場">ブロック置き場</option>
-      <option value="SUB">SUB</option>
-      <option value="その他">その他（自由記述）</option>
-    </select>
-  </label>
+    <label>
+      船番
+      <input type="text" id="ship" required>
+    </label>
 
-  <label id="otherPlaceLabel" style="display:none;">
-    検査場所（自由記述）
-    <input id="placeOther" placeholder="例：第二現場事務所前">
-  </label>
+    <label>
+      ブロック
+      <input type="text" id="block" required>
+    </label>
 
-  <label>船番
-    <input id="ship" required>
-  </label>
+    <label>
+      区画
+      <select id="area">
+        <option>半分</option>
+        <option>全量</option>
+      </select>
+    </label>
 
-  <label>ブロック名
-    <input id="block" required>
-  </label>
+    <label>
+      備考
+      <textarea id="note"></textarea>
+    </label>
 
-  <label>区画
-    <select id="area">
-      <option value="半分">半分</option>
-      <option value="全量">全量</option>
-    </select>
-  </label>
+    <button type="submit">申請する</button>
+  </form>
 
-  <label>備考
-    <textarea id="note"></textarea>
-  </label>
+  <p id="message"></p>
+</main>
 
-  <button onclick="submitForm()">申請する</button>
-</div>
-
-<!-- ===== 自分の申請確認 ===== -->
-<div class="box" id="myData" style="display:none;">
-  <h3>あなたの申請内容（確認用）</h3>
-  <pre id="result"></pre>
-</div>
-
+<!-- ===== JavaScript ===== -->
 <script>
-/* ===== 業者識別ID（端末ごと） ===== */
-const myId = localStorage.getItem("myId") || (() => {
-  const id = "ID-" + Date.now() + "-" + Math.floor(Math.random() * 1000);
-  localStorage.setItem("myId", id);
-  return id;
-})();
+  /* ===== 設定 ===== */
+  const GAS_URL = https://gas-syakenn.onrender.com;
+  // ↑ 本番ではここを差し替える
 
-/* ===== 検査場所：その他表示制御 ===== */
-function toggleOtherPlace() {
-  const isOther = placeBase.value === "その他";
-  otherPlaceLabel.style.display = isOther ? "block" : "none";
-  placeOther.required = isOther;
-}
+  const form = document.getElementById("applyForm");
+  const message = document.getElementById("message");
+  const dateInput = document.getElementById("date");
+  const placeBase = document.getElementById("placeBase");
+  const placeOtherArea = document.getElementById("placeOtherArea");
 
-/* ===== 申請処理 ===== */
-function submitForm() {
-  if (!date.value || !hour.value) {
-    alert("検査日と時間を選択してください");
-    return;
+  /* 検査日：未指定なら翌日 */
+  if (!dateInput.value) {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    dateInput.value = tomorrow.toISOString().slice(0, 10);
   }
 
-  let placeText = "";
-  if (placeBase.value === "その他") {
-    if (!placeOther.value) {
-      alert("検査場所（自由記述）を入力してください");
-      return;
+  /* 検査場所：その他 */
+  placeBase.addEventListener("change", () => {
+    placeOtherArea.style.display =
+      placeBase.value === "その他" ? "block" : "none";
+  });
+
+  /* 送信 */
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const data = {
+      vendor: vendor.value,
+      date: dateInput.value,
+      hour: hour.value,
+      place:
+        placeBase.value === "その他"
+          ? placeOther.value
+          : placeBase.value,
+      ship: ship.value,
+      block: block.value,
+      area: area.value,
+      note: note.value,
+      timestamp: new Date().toISOString()
+    };
+
+    try {
+      await fetch(GAS_URL, {
+        method: "POST",
+        body: JSON.stringify(data),
+        headers: { "Content-Type": "application/json" }
+      });
+
+      message.textContent = "申請を受け付けました。";
+      form.reset();
+    } catch (err) {
+      message.textContent = "送信に失敗しました。";
     }
-    placeText = placeOther.value;
-  } else {
-    placeText = placeBase.value;
-  }
-
-  const dateTime = `${date.value}T${hour.value}:00`;
-
-  const data = {
-    id: myId,
-    vendor: vendor.value,
-    time: dateTime,
-    place: placeText,
-    ship: ship.value,
-    block: block.value,
-    area: area.value,
-    note: note.value,
-    created: new Date().toISOString()
-  };
-
-  const all = JSON.parse(localStorage.getItem("applications") || "[]");
-  const filtered = all.filter(a => a.id !== myId);
-  filtered.push(data);
-
-  localStorage.setItem("applications", JSON.stringify(filtered));
-  localStorage.setItem("myApplication", JSON.stringify(data));
-
-  showMyData();
-  alert("申請を受け付けました");
-}
-
-/* ===== 自分の申請を表示 ===== */
-function showMyData() {
-  const data = JSON.parse(localStorage.getItem("myApplication"));
-  if (!data) return;
-  myData.style.display = "block";
-  result.textContent = JSON.stringify(data, null, 2);
-}
-
-showMyData();
+  });
 </script>
-
 </body>
 </html>
