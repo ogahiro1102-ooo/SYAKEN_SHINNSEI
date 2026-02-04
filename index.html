@@ -1,104 +1,93 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8">
-  <title>検査申請フォーム</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <style>
-    body{font-family:system-ui; padding:16px; background:#f7fafc}
-    form{max-width:520px; margin:auto; background:#fff; padding:16px; border-radius:8px}
-    label{display:block; margin:10px 0 6px}
-    input,select,textarea,button{width:100%; padding:8px; box-sizing:border-box}
-    button{margin-top:12px; background:#0b69ff; color:#fff; border:none; border-radius:6px}
-  </style>
+<meta charset="UTF-8">
+<title>検査申請</title>
 </head>
 <body>
-  <h2 style="text-align:center">社内検査 申請</h2>
+
+<h2>検査申請</h2>
+
+<form id="form">
+  <div>業者名：<input id="vendor" required></div>
+  <div>船番：<input id="shipNo" required></div>
+  <div>ブロック：<input id="block" required></div>
 
   <div>
-    <label>業者名<input id="vendor" type="text"></label>
-    <label>船番<input id="shipNo" type="text"></label>
-    <label>ブロック<input id="block" type="text"></label>
-
-    <label>区画
-      <select id="area">
-        <option value="全量">全量</option>
-        <option value="半分">半分</option>
-      </select>
-    </label>
-
-    <label>検査日<input id="date" type="date"></label>
-
-    <label>時間
-      <select id="time">
-        <option value="">--選択--</option>
-        <option>08:00</option><option>09:00</option><option>10:00</option>
-        <option>11:00</option><option>13:00</option><option>14:00</option>
-        <option>15:00</option><option>16:00</option><option>17:00</option>
-      </select>
-    </label>
-
-    <label>検査場所
-      <select id="place">
-        <option>A棟</option><option>B棟</option><option>C棟</option>
-        <option>ブロック置き場</option><option>SUB</option>
-      </select>
-    </label>
-
-    <label>備考<textarea id="note" rows="3"></textarea></label>
-
-    <button type="button" id="sendBtn">申請する</button>
+    区画：
+    <select id="area">
+      <option value="全量">全量</option>
+      <option value="半分">半分</option>
+    </select>
   </div>
 
+  <div>検査日：<input type="date" id="date" required></div>
+
+  <div>
+    時間：
+    <select id="time">
+      <option>08:00</option>
+      <option>09:00</option>
+      <option>10:00</option>
+      <option>11:00</option>
+      <option>13:00</option>
+      <option>14:00</option>
+      <option>15:00</option>
+      <option>16:00</option>
+      <option>17:00</option>
+    </select>
+  </div>
+
+  <div>
+    検査場所：
+    <select id="place">
+      <option>A棟</option>
+      <option>B棟</option>
+      <option>C棟</option>
+      <option>ブロック置き場</option>
+      <option value="その他">その他</option>
+    </select>
+  </div>
+
+  <div>備考：<input id="note"></div>
+
+  <button type="submit">申請</button>
+</form>
+
 <script>
-  // ★ここに新しいGASの /exec URLを入れる（" "で囲む）
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbyzi4348e3E9FQd7A0l_643DY8aREKaYoA5GcAFh_eB22207UlPK-869L8oIi0u-49OHA/exec"
+const GAS_URL = "https://script.google.com/macros/s/AKfycbydj6gZ4sxuzQGdk4sB_ZFF9GgLPZQwMCDHv5ZR0hlODrVjIOCwCVOgpXOhVV8X5-H2gw/exec";
 
-  // 送信ボタンの安全処理（ページ遷移しない）
-  document.getElementById('sendBtn').addEventListener('click', async function(){
-    const vendor = document.getElementById('vendor').value || "";
-    const shipNo = document.getElementById('shipNo').value || "";
-    const block = document.getElementById('block').value || "";
-    const area = document.getElementById('area').value || "";
-    let date = document.getElementById('date').value || "";
-    const time = document.getElementById('time').value || "";
-    const place = document.getElementById('place').value || "";
-    const note = document.getElementById('note').value || "";
+document.getElementById("form").addEventListener("submit", e => {
+  e.preventDefault();
 
-    // 検査日が未指定なら翌日にセット
-    if (!date) {
-      const d = new Date();
-      d.setDate(d.getDate() + 1);
-      date = d.toISOString().slice(0,10);
+  fetch(GAS_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      vendor: vendor.value,
+      shipNo: shipNo.value,
+      block: block.value,
+      area: area.value,
+      date: date.value,
+      time: time.value,
+      place: place.value,
+      note: note.value
+    })
+  })
+  .then(res => res.text())
+  .then(text => {
+    if (text === "OK") {
+      alert("申請完了しました");
+      document.getElementById("form").reset();
+    } else {
+      alert("申請失敗：" + text);
     }
-
-    // 確実に POST する最小形
-    try {
-      const res = await fetch(GAS_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          vendor, shipNo, block, area, date, time, place, note
-        })
-      });
-
-      const text = await res.text(); // doPost はプレーンテキスト "OK" を返す
-      if (text === "OK") {
-        alert("申請完了しました");
-        // 必要ならフォームをクリア
-        document.getElementById('vendor').value = "";
-        document.getElementById('shipNo').value = "";
-        document.getElementById('block').value = "";
-        document.getElementById('note').value = "";
-        // date は自動で翌日になるように空白のままにしてもよい
-      } else {
-        alert("申請失敗: " + text);
-      }
-    } catch (err) {
-      alert("通信エラーが発生しました（URL/デプロイ/ネットワークを確認）");
-      console.error(err);
-    }
+  })
+  .catch(() => {
+    alert("通信エラーが発生しました");
   });
+});
 </script>
+
 </body>
 </html>
