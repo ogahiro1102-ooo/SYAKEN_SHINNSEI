@@ -7,8 +7,8 @@
 
   <style>
     body {
-      font-family: sans-serif;
-      background: #f5f5f5;
+      font-family: system-ui, sans-serif;
+      background: #f4f6f8;
       padding: 20px;
     }
     h1 {
@@ -18,133 +18,137 @@
       background: #fff;
       padding: 20px;
       border-radius: 8px;
-      max-width: 500px;
+      max-width: 480px;
       margin: auto;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
     label {
       display: block;
-      margin-top: 15px;
+      margin-top: 12px;
+      font-weight: bold;
     }
-    input, select, textarea, button {
+    input, select, button {
       width: 100%;
-      padding: 8px;
-      margin-top: 5px;
+      padding: 10px;
+      margin-top: 4px;
       font-size: 16px;
     }
     button {
       margin-top: 20px;
-      background: #1976d2;
-      color: #fff;
+      background: #007bff;
+      color: white;
       border: none;
       border-radius: 4px;
     }
+    button:disabled {
+      background: #aaa;
+    }
   </style>
 </head>
-
 <body>
-  <h1>社内検査 申請</h1>
 
-  <form id="applyForm">
-    <label>
-      業者名
-      <input type="text" id="company" required>
-    </label>
+<h1>社内検査 申請</h1>
 
-    <label>
-      船番
-      <input type="text" id="shipNo" placeholder="例：1234" required>
-    </label>
+<form id="form">
+  <label>業者名</label>
+  <input type="text" id="vendor" required>
 
-    <label>
-      ブロック
-      <input type="text" id="block" placeholder="例：B-12" required>
-    </label>
+  <label>船番</label>
+  <input type="text" id="shipNo" required>
 
-    <label>
-      検査日
-      <input type="date" id="date">
-    </label>
+  <label>ブロック</label>
+  <input type="text" id="block" required>
 
-    <label>
-      検査時間
-      <select id="time" required>
-        <option value="">選択してください</option>
-        <option>08:00</option>
-        <option>09:00</option>
-        <option>10:00</option>
-        <option>11:00</option>
-        <option>12:00</option>
-        <option>13:00</option>
-        <option>14:00</option>
-        <option>15:00</option>
-        <option>16:00</option>
-        <option>17:00</option>
-      </select>
-    </label>
+  <label>検査日</label>
+  <input type="date" id="date">
 
-    <label>
-      検査場所
-      <select id="place">
-        <option value="A棟">A棟</option>
-        <option value="B棟">B棟</option>
-        <option value="C棟">C棟</option>
-        <option value="ブロック置き場">ブロック置き場</option>
-        <option value="SUB">SUB</option>
-        <option value="その他">その他</option>
-      </select>
-    </label>
+  <label>時間</label>
+  <select id="time">
+    <option value="">選択してください</option>
+    <option>8:00</option>
+    <option>9:00</option>
+    <option>10:00</option>
+    <option>11:00</option>
+    <option>13:00</option>
+    <option>14:00</option>
+    <option>15:00</option>
+    <option>16:00</option>
+    <option>17:00</option>
+  </select>
 
-    <label>
-      （その他の場合）自由記述
-      <textarea id="placeOther"></textarea>
-    </label>
+  <label>検査場所</label>
+  <select id="place">
+    <option value="A棟">A棟</option>
+    <option value="B棟">B棟</option>
+    <option value="C棟">C棟</option>
+    <option value="ブロック置き場">ブロック置き場</option>
+    <option value="その他">その他</option>
+  </select>
 
-    <button type="submit">申請する</button>
-  </form>
+  <label>（その他の場合）自由記述</label>
+  <input type="text" id="placeOther">
 
-  <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbzetclPvPJIOhQV6LJBZTm_7WON1pB8EVe58WxtpxcV4MYe1_0Pp_urgplA02Ef7r8izw/exec";
+  <button type="submit">申請する</button>
+</form>
 
-    // 検査日：未指定なら翌日
-    const dateInput = document.getElementById("date");
-    if (!dateInput.value) {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      dateInput.value = tomorrow.toISOString().split("T")[0];
+<script>
+const GAS_URL = "https://script.google.com/macros/s/AKfycbzetclPvPJIOhQV6LJBZTm_7WON1pB8EVe58WxtpxcV4MYe1_0Pp_urgplA02Ef7r8izw/exec";
+
+document.getElementById("form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const button = e.target.querySelector("button");
+  button.disabled = true;
+
+  // 検査日：未指定なら翌日
+  let date = document.getElementById("date").value;
+  if (!date) {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    date = d.toISOString().slice(0, 10);
+  }
+
+  let place = document.getElementById("place").value;
+  const placeOther = document.getElementById("placeOther").value;
+  if (place === "その他" && placeOther) {
+    place = placeOther;
+  }
+
+  const data = {
+    vendor: document.getElementById("vendor").value,
+    shipNo: document.getElementById("shipNo").value,
+    block: document.getElementById("block").value,
+    date: date,
+    time: document.getElementById("time").value,
+    place: place
+  };
+
+  try {
+    const res = await fetch(GAS_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(data)
+    });
+
+    const text = await res.text();
+
+    if (text === "OK") {
+      alert("申請完了しました");
+      document.getElementById("form").reset();
+    } else {
+      alert("申請失敗：" + text);
     }
 
-    document.getElementById("applyForm").addEventListener("submit", function(e) {
-      e.preventDefault();
+  } catch (err) {
+    alert("通信エラーが発生しました");
+    console.error(err);
+  } finally {
+    button.disabled = false;
+  }
+});
+</script>
 
-      const place = document.getElementById("place").value;
-      const placeOther = document.getElementById("placeOther").value;
-
-      const data = {
-        company: document.getElementById("company").value,
-        shipNo: document.getElementById("shipNo").value,
-        block: document.getElementById("block").value,
-        date: document.getElementById("date").value,
-        time: document.getElementById("time").value,
-        place: place === "その他" ? placeOther : place
-      };
-
-      fetch(GAS_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(data)
-      })
-      .then(res => res.text())
-      .then(() => {
-        alert("申請しました");
-        document.getElementById("applyForm").reset();
-      })
-      .catch(err => {
-        alert("申請に失敗しました");
-        console.error(err);
-      });
-    });
-  </script>
 </body>
 </html>
