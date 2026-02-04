@@ -2,151 +2,64 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>社内検査 申請フォーム</title>
+  <title>社内検査 申請</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <style>
-    body {
-      font-family: system-ui, sans-serif;
-      background: #f4f6f8;
-      padding: 20px;
-    }
-    h1 {
-      text-align: center;
-    }
-    form {
-      background: #fff;
-      padding: 20px;
-      border-radius: 8px;
-      max-width: 480px;
-      margin: auto;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    label {
-      display: block;
-      margin-top: 12px;
-      font-weight: bold;
-    }
-    input, select, button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 4px;
-      font-size: 16px;
-    }
-    button {
-      margin-top: 20px;
-      background: #007bff;
-      color: white;
-      border: none;
-      border-radius: 4px;
-    }
-    button:disabled {
-      background: #aaa;
-    }
-  </style>
 </head>
 <body>
 
-<h1>社内検査 申請</h1>
+<h2>社内検査 申請</h2>
 
 <form id="form">
-  <label>業者名</label>
-  <input type="text" id="vendor" required>
+  <input name="vendor" placeholder="業者名" required><br>
+  <input name="shipNo" placeholder="船番" required><br>
+  <input name="block" placeholder="ブロック" required><br>
 
-  <label>船番</label>
-  <input type="text" id="shipNo" required>
+  <input type="date" name="date"><br>
 
-  <label>ブロック</label>
-  <input type="text" id="block" required>
+  <select name="time">
+    <option>8:00</option><option>9:00</option><option>10:00</option>
+    <option>11:00</option><option>13:00</option><option>14:00</option>
+    <option>15:00</option><option>16:00</option><option>17:00</option>
+  </select><br>
 
-  <label>検査日</label>
-  <input type="date" id="date">
+  <select name="place">
+    <option>A棟</option>
+    <option>B棟</option>
+    <option>C棟</option>
+    <option>ブロック置き場</option>
+  </select><br>
 
-  <label>時間</label>
-  <select id="time">
-    <option value="">選択してください</option>
-    <option>8:00</option>
-    <option>9:00</option>
-    <option>10:00</option>
-    <option>11:00</option>
-    <option>13:00</option>
-    <option>14:00</option>
-    <option>15:00</option>
-    <option>16:00</option>
-    <option>17:00</option>
-  </select>
-
-  <label>検査場所</label>
-  <select id="place">
-    <option value="A棟">A棟</option>
-    <option value="B棟">B棟</option>
-    <option value="C棟">C棟</option>
-    <option value="ブロック置き場">ブロック置き場</option>
-    <option value="その他">その他</option>
-  </select>
-
-  <label>（その他の場合）自由記述</label>
-  <input type="text" id="placeOther">
-
-  <button type="submit">申請する</button>
+  <button type="submit">申請</button>
 </form>
 
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbzetclPvPJIOhQV6LJBZTm_7WON1pB8EVe58WxtpxcV4MYe1_0Pp_urgplA02Ef7r8izw/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbwzVhYLJBTG4uEkxY3_BzLeXyvhmvB6Tsgy4xD4I0LVaPSgRKe7hIVoIaOHyzRPLg2DGA/exec";
 
-document.getElementById("form").addEventListener("submit", async (e) => {
+document.getElementById("form").addEventListener("submit", (e) => {
   e.preventDefault();
 
-  const button = e.target.querySelector("button");
-  button.disabled = true;
+  const form = e.target;
 
-  // 検査日：未指定なら翌日
-  let date = document.getElementById("date").value;
-  if (!date) {
+  // 検査日未指定 → 翌日
+  if (!form.date.value) {
     const d = new Date();
     d.setDate(d.getDate() + 1);
-    date = d.toISOString().slice(0, 10);
+    form.date.value = d.toISOString().slice(0,10);
   }
 
-  let place = document.getElementById("place").value;
-  const placeOther = document.getElementById("placeOther").value;
-  if (place === "その他" && placeOther) {
-    place = placeOther;
-  }
+  const formData = new FormData(form);
 
-  const data = {
-    vendor: document.getElementById("vendor").value,
-    shipNo: document.getElementById("shipNo").value,
-    block: document.getElementById("block").value,
-    date: date,
-    time: document.getElementById("time").value,
-    place: place
-  };
-
-  try {
-    const res = await fetch(GAS_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(data)
-    });
-
-    const text = await res.text();
-
-    if (text === "OK") {
-      alert("申請完了しました");
-      document.getElementById("form").reset();
-    } else {
-      alert("申請失敗：" + text);
-    }
-
-  } catch (err) {
-    alert("通信エラーが発生しました");
-    console.error(err);
-  } finally {
-    button.disabled = false;
-  }
+  fetch(GAS_URL, {
+    method: "POST",
+    body: formData
+  })
+  .then(() => {
+    alert("申請完了しました");
+    form.reset();
+  })
+  .catch(() => {
+    alert("申請失敗");
+  });
 });
 </script>
 
