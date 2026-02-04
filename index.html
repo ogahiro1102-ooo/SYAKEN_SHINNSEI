@@ -3,54 +3,61 @@
 <head>
   <meta charset="UTF-8">
   <title>社内検査 申請フォーム</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- ===== CSS ===== -->
   <style>
     body {
       font-family: sans-serif;
-      background: #f7f7f7;
-      margin: 0;
-      padding: 16px;
+      background: #f5f5f5;
+      padding: 20px;
     }
-    main {
-      max-width: 480px;
-      margin: auto;
+    h1 {
+      text-align: center;
+    }
+    form {
       background: #fff;
-      padding: 16px;
+      padding: 20px;
       border-radius: 8px;
+      max-width: 500px;
+      margin: auto;
     }
     label {
       display: block;
-      margin-bottom: 12px;
+      margin-top: 15px;
     }
     input, select, textarea, button {
       width: 100%;
-      padding: 6px;
-      margin-top: 4px;
+      padding: 8px;
+      margin-top: 5px;
+      font-size: 16px;
     }
     button {
+      margin-top: 20px;
       background: #1976d2;
       color: #fff;
       border: none;
       border-radius: 4px;
-      font-size: 16px;
-    }
-    #message {
-      margin-top: 12px;
-      font-weight: bold;
     }
   </style>
 </head>
 
 <body>
-<main>
-  <h1>社内検査 申請フォーム</h1>
+  <h1>社内検査 申請</h1>
 
   <form id="applyForm">
     <label>
-      協力業者名
-      <input type="text" id="vendor" required>
+      業者名
+      <input type="text" id="company" required>
+    </label>
+
+    <label>
+      船番
+      <input type="text" id="shipNo" placeholder="例：1234" required>
+    </label>
+
+    <label>
+      ブロック
+      <input type="text" id="block" placeholder="例：B-12" required>
     </label>
 
     <label>
@@ -60,7 +67,7 @@
 
     <label>
       検査時間
-      <select id="hour" required>
+      <select id="time" required>
         <option value="">選択してください</option>
         <option>08:00</option>
         <option>09:00</option>
@@ -77,107 +84,67 @@
 
     <label>
       検査場所
-      <select id="placeBase" required>
-        <option value="">選択してください</option>
-        <option>A棟</option>
-        <option>B棟</option>
-        <option>C棟</option>
-        <option>ブロック置き場</option>
-        <option>SUB</option>
-        <option>その他</option>
-      </select>
-    </label>
-
-    <label id="placeOtherArea" style="display:none;">
-      検査場所（自由記述）
-      <input type="text" id="placeOther">
-    </label>
-
-    <label>
-      船番
-      <input type="text" id="ship" required>
-    </label>
-
-    <label>
-      ブロック
-      <input type="text" id="block" required>
-    </label>
-
-    <label>
-      区画
-      <select id="area">
-        <option>半分</option>
-        <option>全量</option>
+      <select id="place">
+        <option value="A棟">A棟</option>
+        <option value="B棟">B棟</option>
+        <option value="C棟">C棟</option>
+        <option value="ブロック置き場">ブロック置き場</option>
+        <option value="SUB">SUB</option>
+        <option value="その他">その他</option>
       </select>
     </label>
 
     <label>
-      備考
-      <textarea id="note"></textarea>
+      （その他の場合）自由記述
+      <textarea id="placeOther"></textarea>
     </label>
 
     <button type="submit">申請する</button>
   </form>
 
-  <p id="message"></p>
-</main>
+  <script>
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzHiFKxx-9_chA3Fv2stKA8NcZZfj88VwQMYo1HDogZ6k09EdDUbroYg4_I65rYk3AUkQ/exec";
 
-<!-- ===== JavaScript ===== -->
-<script>
-  /* ===== 設定 ===== */
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbxnXs0YpgQU8tajqk6u6iQZ4bqKnIdOUI0zwgJIy5bW8AtzLK1FypEC0cQK_rM3KubSPw/exec"
-
-  const form = document.getElementById("applyForm");
-  const message = document.getElementById("message");
-  const dateInput = document.getElementById("date");
-  const placeBase = document.getElementById("placeBase");
-  const placeOtherArea = document.getElementById("placeOtherArea");
-
-  /* 検査日：未指定なら翌日 */
-  if (!dateInput.value) {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    dateInput.value = tomorrow.toISOString().slice(0, 10);
-  }
-
-  /* 検査場所：その他 */
-  placeBase.addEventListener("change", () => {
-    placeOtherArea.style.display =
-      placeBase.value === "その他" ? "block" : "none";
-  });
-
-  /* 送信 */
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const data = {
-      vendor: vendor.value,
-      date: dateInput.value,
-      hour: hour.value,
-      place:
-        placeBase.value === "その他"
-          ? placeOther.value
-          : placeBase.value,
-      ship: ship.value,
-      block: block.value,
-      area: area.value,
-      note: note.value,
-      timestamp: new Date().toISOString()
-    };
-
-    try {
-      await fetch(GAS_URL, {
-        method: "POST",
-        body: JSON.stringify(data),
-        headers: { "Content-Type": "application/json" }
-      });
-
-      message.textContent = "申請を受け付けました。";
-      form.reset();
-    } catch (err) {
-      message.textContent = "送信に失敗しました。";
+    // 検査日：未指定なら翌日
+    const dateInput = document.getElementById("date");
+    if (!dateInput.value) {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      dateInput.value = tomorrow.toISOString().split("T")[0];
     }
-  });
-</script>
+
+    document.getElementById("applyForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+
+      const place = document.getElementById("place").value;
+      const placeOther = document.getElementById("placeOther").value;
+
+      const data = {
+        company: document.getElementById("company").value,
+        shipNo: document.getElementById("shipNo").value,
+        block: document.getElementById("block").value,
+        date: document.getElementById("date").value,
+        time: document.getElementById("time").value,
+        place: place === "その他" ? placeOther : place
+      };
+
+      fetch(GAS_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+      })
+      .then(res => res.text())
+      .then(() => {
+        alert("申請しました");
+        document.getElementById("applyForm").reset();
+      })
+      .catch(err => {
+        alert("申請に失敗しました");
+        console.error(err);
+      });
+    });
+  </script>
 </body>
 </html>
