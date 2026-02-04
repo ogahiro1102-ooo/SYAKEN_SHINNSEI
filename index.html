@@ -2,131 +2,137 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>検査予定 管理画面</title>
+<title>検査申請</title>
 
 <style>
-  body { font-family: sans-serif; }
-  table { border-collapse: collapse; width: 100%; margin-top: 10px; }
-  th, td { border: 1px solid #999; padding: 4px; text-align: center; }
-  th { background: #eee; }
-  .duplicate { background-color: #ffb3b3; }
+  body {
+    font-family: sans-serif;
+    max-width: 600px;
+    margin: auto;
+  }
+  label {
+    display: block;
+    margin-top: 10px;
+  }
+  input, select, textarea, button {
+    width: 100%;
+    padding: 6px;
+    margin-top: 4px;
+  }
+  button {
+    margin-top: 15px;
+    font-size: 16px;
+  }
 </style>
 </head>
 
 <body>
 
-<h2>検査予定 管理画面</h2>
+<h2>検査申請フォーム</h2>
 
-<div>
-  開始日：
-  <input type="date" id="from">
-  終了日：
-  <input type="date" id="to">
-  <button onclick="loadData()">表示</button>
-  <button onclick="downloadExcel()">Excel出力</button>
-</div>
+<label>業者名
+  <input type="text" id="vendor" required>
+</label>
 
-<table id="table">
-  <thead>
-    <tr>
-      <th>業者名</th>
-      <th>船番</th>
-      <th>ブロック</th>
-      <th>区画</th>
-      <th>検査日</th>
-      <th>時間</th>
-      <th>検査場所</th>
-      <th>備考</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
+<label>船番
+  <input type="text" id="shipNo" required>
+</label>
+
+<label>ブロック
+  <input type="text" id="block" required>
+</label>
+
+<label>区画
+  <select id="area">
+    <option value="全量">全量</option>
+    <option value="半分">半分</option>
+  </select>
+</label>
+
+<label>検査日
+  <input type="date" id="date">
+</label>
+
+<label>時間
+  <select id="time">
+    <option value="">選択してください</option>
+    <option>08:00</option>
+    <option>09:00</option>
+    <option>10:00</option>
+    <option>11:00</option>
+    <option>12:00</option>
+    <option>13:00</option>
+    <option>14:00</option>
+    <option>15:00</option>
+    <option>16:00</option>
+    <option>17:00</option>
+  </select>
+</label>
+
+<label>検査場所
+  <select id="place" onchange="toggleNote()">
+    <option value="A棟">A棟</option>
+    <option value="B棟">B棟</option>
+    <option value="C棟">C棟</option>
+    <option value="ブロック置き場">ブロック置き場</option>
+    <option value="SUB">SUB</option>
+    <option value="その他">その他</option>
+  </select>
+</label>
+
+<label id="noteArea" style="display:none;">備考（自由記述）
+  <textarea id="note"></textarea>
+</label>
+
+<button onclick="submitForm()">申請する</button>
 
 <script>
 const GAS_URL = "https://script.google.com/macros/s/AKfycbxqdss65l9VQYnwxBMNHeghRCvH5gJncBA6m7jy6Ap7AWm20EPW_0pN94PQNKuQWIH3/exec";
-let currentData = [];
 
-function loadData() {
-  const from = document.getElementById("from").value;
-  const to   = document.getElementById("to").value;
+/**
+ * 初期表示：検査日が未指定なら翌日
+ */
+window.onload = () => {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  document.getElementById("date").value = d.toISOString().slice(0,10);
+};
 
-  let url = GAS_URL;
-  if (from && to) {
-    url += `?from=${from}&to=${to}`;
-  }
-
-  fetch(url)
-    .then(res => res.json())
-    .then(data => {
-      currentData = data;
-      renderTable(data);
-    })
-    .catch(() => {
-      alert("データ取得に失敗しました");
-    });
+function toggleNote() {
+  const place = document.getElementById("place").value;
+  document.getElementById("noteArea").style.display =
+    place === "その他" ? "block" : "none";
 }
 
-function renderTable(data) {
-  const tbody = document.querySelector("#table tbody");
-  tbody.innerHTML = "";
+function submitForm() {
+  const data = {
+    vendor: vendor.value,
+    shipNo: shipNo.value,
+    block: block.value,
+    area: area.value,
+    date: date.value,
+    time: time.value,
+    place: place.value,
+    note: note.value
+  };
 
-  // 重複チェック用
-  const map = {};
-  data.forEach(d => {
-    const key = `${d.date}_${d.time}_${d.place}`;
-    map[key] = (map[key] || 0) + 1;
-  });
-
-  data.forEach(d => {
-    const key = `${d.date}_${d.time}_${d.place}`;
-    const tr = document.createElement("tr");
-
-    if (map[key] > 1) {
-      tr.classList.add("duplicate");
+  fetch(GAS_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  })
+  .then(res => res.text())
+  .then(text => {
+    if (text === "OK") {
+      alert("申請完了しました");
+      location.reload();
+    } else {
+      alert("申請失敗：" + text);
     }
-
-    tr.innerHTML = `
-      <td>${d.vendor}</td>
-      <td>${d.shipNo}</td>
-      <td>${d.block}</td>
-      <td>${d.area}</td>
-      <td>${d.date}</td>
-      <td>${d.time}</td>
-      <td>${d.place}</td>
-      <td>${d.note}</td>
-    `;
-    tbody.appendChild(tr);
+  })
+  .catch(() => {
+    alert("通信エラーが発生しました");
   });
-}
-
-function downloadExcel() {
-  if (currentData.length === 0) {
-    alert("データがありません");
-    return;
-  }
-
-  let csv = "業者名,船番,ブロック,区画,検査日,時間,検査場所,備考\n";
-  currentData.forEach(d => {
-    csv += [
-      d.vendor,
-      d.shipNo,
-      d.block,
-      d.area,
-      d.date,
-      d.time,
-      d.place,
-      d.note
-    ].join(",") + "\n";
-  });
-
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "社内検査予定.csv";
-  a.click();
-  URL.revokeObjectURL(url);
 }
 </script>
 
