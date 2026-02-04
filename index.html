@@ -2,87 +2,60 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>社内検査 申請</title>
+  <title>検査申請</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
     body {
       font-family: system-ui, sans-serif;
-      background: #f4f6f8;
-      padding: 16px;
-    }
-    h1 {
-      text-align: center;
-    }
-    form {
-      background: #fff;
-      padding: 16px;
-      border-radius: 8px;
-      max-width: 480px;
-      margin: auto;
+      padding: 20px;
     }
     label {
       display: block;
       margin-top: 12px;
-      font-weight: bold;
     }
     input, select, textarea, button {
       width: 100%;
-      padding: 10px;
+      padding: 8px;
       margin-top: 4px;
       font-size: 16px;
-      box-sizing: border-box;
-    }
-    .radio-group {
-      display: flex;
-      gap: 16px;
-      margin-top: 6px;
-    }
-    .radio-group label {
-      font-weight: normal;
     }
     button {
       margin-top: 20px;
-      background: #007bff;
-      color: #fff;
-      border: none;
-      border-radius: 4px;
     }
   </style>
 </head>
 <body>
 
-<h1>社内検査 申請</h1>
+<h2>検査申請フォーム</h2>
 
-<form id="form">
-  <label>業者名</label>
-  <input name="vendor" required>
+<label>業者名
+  <input id="vendor">
+</label>
 
-  <label>船番</label>
-  <input name="shipNo" required>
+<label>船番
+  <input id="shipNo">
+</label>
 
-  <label>ブロック</label>
-  <input name="block" required>
+<label>ブロック
+  <input id="block">
+</label>
 
-  <label>区画</label>
-  <div class="radio-group">
-    <label>
-      <input type="radio" name="area" value="全量" checked>
-      全量
-    </label>
-    <label>
-      <input type="radio" name="area" value="半分">
-      半分
-    </label>
-  </div>
+<label>区画
+  <select id="area">
+    <option value="全量">全量</option>
+    <option value="半分">半分</option>
+  </select>
+</label>
 
-  <label>検査日</label>
-  <input type="date" name="date">
+<label>検査日
+  <input type="date" id="date">
+</label>
 
-  <label>時間</label>
-  <select name="time">
-    <option>8:00</option>
-    <option>9:00</option>
+<label>時間
+  <select id="time">
+    <option>08:00</option>
+    <option>09:00</option>
     <option>10:00</option>
     <option>11:00</option>
     <option>13:00</option>
@@ -91,50 +64,56 @@
     <option>16:00</option>
     <option>17:00</option>
   </select>
+</label>
 
-  <label>検査場所</label>
-  <select name="place">
+<label>検査場所
+  <select id="place">
     <option>A棟</option>
     <option>B棟</option>
     <option>C棟</option>
     <option>ブロック置き場</option>
+    <option>SUB</option>
   </select>
+</label>
 
-  <label>備考</label>
-  <textarea name="note" rows="3"></textarea>
+<label>備考
+  <textarea id="note"></textarea>
+</label>
 
-  <button type="submit">申請する</button>
-</form>
+<button type="button" onclick="submitForm()">申請する</button>
 
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbwOVtTolytMDqpVHN2lD5rHUGmPJDeBBT14r76HH4_vxu65KuGf8LmXRNzVDKP118ovtw/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbwxP-L34iHY8zNjIqLJMbmXgmv36JHvSj3uCjNaTI5rEo0y3mcmil6gmFAM28kOWLTaQw/exec";
 
-document.getElementById("form").addEventListener("submit", (e) => {
-  e.preventDefault();
-
-  const form = e.target;
-
-  // 検査日 未指定 → 翌日
-  if (!form.date.value) {
-    const d = new Date();
-    d.setDate(d.getDate() + 1);
-    form.date.value = d.toISOString().slice(0, 10);
-  }
-
-  const formData = new FormData(form);
-
+function submitForm() {
   fetch(GAS_URL, {
     method: "POST",
-    body: formData
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      vendor: vendor.value,
+      shipNo: shipNo.value,
+      block: block.value,
+      area: area.value,
+      date: date.value,
+      time: time.value,
+      place: place.value,
+      note: note.value
+    })
   })
-  .then(() => {
-    alert("申請完了しました");
-    form.reset();
+  .then(res => res.json())
+  .then(data => {
+    if (data.result === "OK") {
+      alert("申請完了しました");
+    } else {
+      alert("申請失敗：" + data.message);
+    }
   })
   .catch(() => {
-    alert("申請失敗");
+    alert("通信エラーが発生しました");
   });
-});
+}
 </script>
 
 </body>
