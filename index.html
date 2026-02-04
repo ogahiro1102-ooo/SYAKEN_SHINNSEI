@@ -14,6 +14,9 @@
   <input name="shipNo" placeholder="船番" required><br>
   <input name="block" placeholder="ブロック" required><br>
 
+  <!-- 追加①：区画 -->
+  <input name="area" placeholder="区画"><br>
+
   <input type="date" name="date"><br>
 
   <select name="time">
@@ -29,18 +32,21 @@
     <option>ブロック置き場</option>
   </select><br>
 
+  <!-- 追加②：備考 -->
+  <textarea name="note" placeholder="備考"></textarea><br>
+
   <button type="submit">申請</button>
 </form>
 
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbwzVhYLJBTG4uEkxY3_BzLeXyvhmvB6Tsgy4xD4I0LVaPSgRKe7hIVoIaOHyzRPLg2DGA/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbzbeJoOOtJYBH0xET8twTI5tp5tz1PX6iHHD4WZWsmy5tSCtymRI06cOa37LPKaPjWzjw/exec";
 
 document.getElementById("form").addEventListener("submit", (e) => {
   e.preventDefault();
 
   const form = e.target;
 
-  // 検査日未指定 → 翌日
+  // 検査日 未指定 → 翌日
   if (!form.date.value) {
     const d = new Date();
     d.setDate(d.getDate() + 1);
