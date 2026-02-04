@@ -1,139 +1,140 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<title>検査申請</title>
+  <meta charset="UTF-8">
+  <title>社内検査 申請</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<style>
-  body {
-    font-family: sans-serif;
-    max-width: 600px;
-    margin: auto;
-  }
-  label {
-    display: block;
-    margin-top: 10px;
-  }
-  input, select, textarea, button {
-    width: 100%;
-    padding: 6px;
-    margin-top: 4px;
-  }
-  button {
-    margin-top: 15px;
-    font-size: 16px;
-  }
-</style>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #f4f6f8;
+      padding: 16px;
+    }
+    h1 {
+      text-align: center;
+    }
+    form {
+      background: #fff;
+      padding: 16px;
+      border-radius: 8px;
+      max-width: 480px;
+      margin: auto;
+    }
+    label {
+      display: block;
+      margin-top: 12px;
+      font-weight: bold;
+    }
+    input, select, textarea, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 4px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    .radio-group {
+      display: flex;
+      gap: 16px;
+      margin-top: 6px;
+    }
+    .radio-group label {
+      font-weight: normal;
+    }
+    button {
+      margin-top: 20px;
+      background: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+    }
+  </style>
 </head>
-
 <body>
 
-<h2>検査申請フォーム</h2>
+<h1>社内検査 申請</h1>
 
-<label>業者名
-  <input type="text" id="vendor" required>
-</label>
+<form id="form">
+  <label>業者名</label>
+  <input name="vendor" required>
 
-<label>船番
-  <input type="text" id="shipNo" required>
-</label>
+  <label>船番</label>
+  <input name="shipNo" required>
 
-<label>ブロック
-  <input type="text" id="block" required>
-</label>
+  <label>ブロック</label>
+  <input name="block" required>
 
-<label>区画
-  <select id="area">
-    <option value="全量">全量</option>
-    <option value="半分">半分</option>
-  </select>
-</label>
+  <label>区画</label>
+  <div class="radio-group">
+    <label>
+      <input type="radio" name="area" value="全量" checked>
+      全量
+    </label>
+    <label>
+      <input type="radio" name="area" value="半分">
+      半分
+    </label>
+  </div>
 
-<label>検査日
-  <input type="date" id="date">
-</label>
+  <label>検査日</label>
+  <input type="date" name="date">
 
-<label>時間
-  <select id="time">
-    <option value="">選択してください</option>
-    <option>08:00</option>
-    <option>09:00</option>
+  <label>時間</label>
+  <select name="time">
+    <option>8:00</option>
+    <option>9:00</option>
     <option>10:00</option>
     <option>11:00</option>
-    <option>12:00</option>
     <option>13:00</option>
     <option>14:00</option>
     <option>15:00</option>
     <option>16:00</option>
     <option>17:00</option>
   </select>
-</label>
 
-<label>検査場所
-  <select id="place" onchange="toggleNote()">
-    <option value="A棟">A棟</option>
-    <option value="B棟">B棟</option>
-    <option value="C棟">C棟</option>
-    <option value="ブロック置き場">ブロック置き場</option>
-    <option value="SUB">SUB</option>
-    <option value="その他">その他</option>
+  <label>検査場所</label>
+  <select name="place">
+    <option>A棟</option>
+    <option>B棟</option>
+    <option>C棟</option>
+    <option>ブロック置き場</option>
   </select>
-</label>
 
-<label id="noteArea" style="display:none;">備考（自由記述）
-  <textarea id="note"></textarea>
-</label>
+  <label>備考</label>
+  <textarea name="note" rows="3"></textarea>
 
-<button onclick="submitForm()">申請する</button>
+  <button type="submit">申請する</button>
+</form>
 
 <script>
-const GAS_URL ="https://script.google.com/macros/s/AKfycbwb5sO28TDNZK64sSetBn-Pec5y3YwDUM361-ueXUdwZMIXc_G__Qzy93Ul1pNajuZyQA/exec"
+const GAS_URL = "https://script.google.com/macros/s/AKfycbyunW7GEShCBkxJT0TkJEV-bptPlXU36p87bX_VyMOIhyXJRCpTXHq2q7obXXZrOx9Rig/exec";
 
-/**
- * 初期表示：検査日が未指定なら翌日
- */
-window.onload = () => {
-  const d = new Date();
-  d.setDate(d.getDate() + 1);
-  document.getElementById("date").value = d.toISOString().slice(0,10);
-};
+document.getElementById("form").addEventListener("submit", (e) => {
+  e.preventDefault();
 
-function toggleNote() {
-  const place = document.getElementById("place").value;
-  document.getElementById("noteArea").style.display =
-    place === "その他" ? "block" : "none";
-}
+  const form = e.target;
 
-function submitForm() {
-  const data = {
-    vendor: vendor.value,
-    shipNo: shipNo.value,
-    block: block.value,
-    area: area.value,
-    date: date.value,
-    time: time.value,
-    place: place.value,
-    note: note.value
-  };
+  // 検査日 未指定 → 翌日
+  if (!form.date.value) {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    form.date.value = d.toISOString().slice(0, 10);
+  }
+
+  const formData = new FormData(form);
 
   fetch(GAS_URL, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data)
+    body: formData
   })
-  .then(res => res.text())
-  .then(text => {
-    if (text === "OK") {
-      alert("申請完了しました");
-      location.reload();
-    } else {
-      alert("申請失敗：" + text);
-    }
+  .then(() => {
+    alert("申請完了しました");
+    form.reset();
   })
   .catch(() => {
-    alert("通信エラーが発生しました");
+    alert("申請失敗");
   });
-}
+});
 </script>
 
 </body>
