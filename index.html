@@ -4,42 +4,110 @@
   <meta charset="UTF-8">
   <title>社内検査 申請</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #f4f6f8;
+      padding: 16px;
+    }
+    h1 {
+      text-align: center;
+    }
+    form {
+      background: #fff;
+      padding: 16px;
+      border-radius: 8px;
+      max-width: 480px;
+      margin: auto;
+    }
+    label {
+      display: block;
+      margin-top: 12px;
+      font-weight: bold;
+    }
+    input, select, textarea, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 4px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    .radio-group {
+      display: flex;
+      gap: 16px;
+      margin-top: 6px;
+    }
+    .radio-group label {
+      font-weight: normal;
+    }
+    button {
+      margin-top: 20px;
+      background: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+    }
+  </style>
 </head>
 <body>
 
-<h2>社内検査 申請</h2>
+<h1>社内検査 申請</h1>
 
 <form id="form">
-  <input name="vendor" placeholder="業者名" required><br>
-  <input name="shipNo" placeholder="船番" required><br>
-  <input name="block" placeholder="ブロック" required><br>
+  <label>業者名</label>
+  <input name="vendor" required>
 
-  <!-- 追加①：区画 -->
-  <input name="area" placeholder="区画"><br>
+  <label>船番</label>
+  <input name="shipNo" required>
 
-  <input type="date" name="date"><br>
+  <label>ブロック</label>
+  <input name="block" required>
 
+  <label>区画</label>
+  <div class="radio-group">
+    <label>
+      <input type="radio" name="area" value="全量" checked>
+      全量
+    </label>
+    <label>
+      <input type="radio" name="area" value="半分">
+      半分
+    </label>
+  </div>
+
+  <label>検査日</label>
+  <input type="date" name="date">
+
+  <label>時間</label>
   <select name="time">
-    <option>8:00</option><option>9:00</option><option>10:00</option>
-    <option>11:00</option><option>13:00</option><option>14:00</option>
-    <option>15:00</option><option>16:00</option><option>17:00</option>
-  </select><br>
+    <option>8:00</option>
+    <option>9:00</option>
+    <option>10:00</option>
+    <option>11:00</option>
+    <option>13:00</option>
+    <option>14:00</option>
+    <option>15:00</option>
+    <option>16:00</option>
+    <option>17:00</option>
+  </select>
 
+  <label>検査場所</label>
   <select name="place">
     <option>A棟</option>
     <option>B棟</option>
     <option>C棟</option>
     <option>ブロック置き場</option>
-  </select><br>
+  </select>
 
-  <!-- 追加②：備考 -->
-  <textarea name="note" placeholder="備考"></textarea><br>
+  <label>備考</label>
+  <textarea name="note" rows="3"></textarea>
 
-  <button type="submit">申請</button>
+  <button type="submit">申請する</button>
 </form>
 
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbzbeJoOOtJYBH0xET8twTI5tp5tz1PX6iHHD4WZWsmy5tSCtymRI06cOa37LPKaPjWzjw/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbzAvNRpg_MNaQ4muzEjyk674LZTiE90AkBKQ0pAUfe2fdoRM-jALmqg6mQfCiNQL1fv2A/exec";
 
 document.getElementById("form").addEventListener("submit", (e) => {
   e.preventDefault();
@@ -50,7 +118,7 @@ document.getElementById("form").addEventListener("submit", (e) => {
   if (!form.date.value) {
     const d = new Date();
     d.setDate(d.getDate() + 1);
-    form.date.value = d.toISOString().slice(0,10);
+    form.date.value = d.toISOString().slice(0, 10);
   }
 
   const formData = new FormData(form);
