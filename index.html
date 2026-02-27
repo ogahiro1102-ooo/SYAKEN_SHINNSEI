@@ -1,139 +1,161 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>社内検査 申請</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <style>
-    body {
-      font-family: system-ui, sans-serif;
-      background: #f4f6f8;
-      padding: 16px;
-    }
-    h1 {
-      text-align: center;
-    }
-    form {
-      background: #fff;
-      padding: 16px;
-      border-radius: 8px;
-      max-width: 480px;
-      margin: auto;
-    }
-    label {
-      display: block;
-      margin-top: 12px;
-      font-weight: bold;
-    }
-    input, select, textarea, button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 4px;
-      font-size: 16px;
-      box-sizing: border-box;
-    }
-    .radio-group {
-      display: flex;
-      gap: 16px;
-      margin-top: 6px;
-    }
-    .radio-group label {
-      font-weight: normal;
-    }
-    button {
-      margin-top: 20px;
-      background: #007bff;
-      color: #fff;
-      border: none;
-      border-radius: 4px;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>社内検査申請</title>
+<style>
+body{font-family:sans-serif;background:#f2f4f7;padding:20px;}
+.card{background:#fff;padding:20px;border-radius:12px;max-width:500px;margin:auto;box-shadow:0 4px 12px rgba(0,0,0,0.1);}
+label{display:block;margin-top:12px;font-weight:bold}
+input,select,textarea{width:100%;padding:8px;margin-top:4px;border-radius:6px;border:1px solid #ccc;box-sizing:border-box;}
+button{margin-top:18px;padding:12px;width:100%;background:#2b7cff;color:white;border:none;border-radius:8px;font-size:16px;cursor:pointer;}
+button:disabled{background:#999}
+#status{margin-top:10px;text-align:center;font-weight:bold}
+#last{margin-top:20px;padding:12px;background:#eef3ff;border-radius:8px;font-size:14px;}
+.shipWrap{display:flex;}
+.prefix{background:#ddd;padding:8px;border-radius:6px 0 0 6px;border:1px solid #ccc;border-right:none;}
+.shipInput{border-radius:0 6px 6px 0;}
+</style>
 </head>
 <body>
 
-<h1>社内検査 申請</h1>
+<div class="card">
+<h2>検査申請</h2>
 
-<form id="form">
-  <label>業者名</label>
-  <input name="vendor" required>
+<label>業者名</label>
+<input id="company">
 
-  <label>船番</label>
-  <input name="shipNo" required>
+<label>船番</label>
+<div class="shipWrap">
+<div class="prefix">SA</div>
+<input id="ship" class="shipInput" placeholder="001">
+</div>
 
-  <label>ブロック</label>
-  <input name="block" required>
+<label>ブロック</label>
+<input id="block">
 
-  <label>区画</label>
-  <div class="radio-group">
-    <label>
-      <input type="radio" name="area" value="全量" checked>
-      全量
-    </label>
-    <label>
-      <input type="radio" name="area" value="半分">
-      半分
-    </label>
-  </div>
+<label>区画</label>
+<select id="area">
+<option value="全部">全部</option>
+<option value="半分">半分</option>
+</select>
 
-  <label>検査日</label>
-  <input type="date" name="date">
+<label>検査日</label>
+<input type="date" id="date">
 
-  <label>時間</label>
-  <select name="time">
-    <option>8:00</option>
-    <option>9:00</option>
-    <option>10:00</option>
-    <option>11:00</option>
-    <option>13:00</option>
-    <option>14:00</option>
-    <option>15:00</option>
-    <option>16:00</option>
-    <option>17:00</option>
-  </select>
+<label>時間</label>
+<select id="time"></select>
 
-  <label>検査場所</label>
-  <select name="place">
-    <option>A棟</option>
-    <option>B棟</option>
-    <option>C棟</option>
-    <option>ブロック置き場</option>
-  </select>
+<label>検査場所</label>
+<select id="place">
+<option value="A棟">A棟</option>
+<option value="B棟">B棟</option>
+<option value="C棟">C棟</option>
+<option value="ブロック置き場">ブロック置き場</option>
+<option value="SUB定盤">SUB定盤</option>
+<option value="その他">その他</option>
+</select>
 
-  <label>備考</label>
-  <textarea name="note" rows="3"></textarea>
+<label>備考（任意）</label>
+<textarea id="note"></textarea>
 
-  <button type="submit">申請する</button>
-</form>
+<button id="sendBtn">申請</button>
+<div id="status"></div>
+<div id="last" style="display:none"></div>
+</div>
 
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbyunW7GEShCBkxJT0TkJEV-bptPlXU36p87bX_VyMOIhyXJRCpTXHq2q7obXXZrOx9Rig/exec";
+const GAS_URL="https://script.google.com/macros/s/AKfycby0ungd2sS1_7JckboZEnptY4HkFw2MZVk80kEJXJ7h5PBi7l1NnMioKh43w4KK37ZyMA/exec";
 
-document.getElementById("form").addEventListener("submit", (e) => {
-  e.preventDefault();
+/* 要素取得 */
+const company=document.getElementById("company");
+const ship=document.getElementById("ship");
+const block=document.getElementById("block");
+const area=document.getElementById("area");
+const date=document.getElementById("date");
+const time=document.getElementById("time");
+const place=document.getElementById("place");
+const note=document.getElementById("note");
+const status=document.getElementById("status");
+const last=document.getElementById("last");
+const sendBtn=document.getElementById("sendBtn");
 
-  const form = e.target;
+/* 時間生成 */
+for(let h=8;h<=17;h++){
+  const t=("0"+h).slice(-2)+":00";
+  const opt=document.createElement("option");
+  opt.value=t;
+  opt.textContent=t;
+  time.appendChild(opt);
+}
 
-  // 検査日 未指定 → 翌日
-  if (!form.date.value) {
-    const d = new Date();
-    d.setDate(d.getDate() + 1);
-    form.date.value = d.toISOString().slice(0, 10);
+/* UIロック */
+function lockUI(lock){
+  document.querySelectorAll("input,select,textarea,button")
+    .forEach(el=>el.disabled=lock);
+}
+
+/* 直前表示 */
+function showLast(data){
+  last.style.display="block";
+  last.innerHTML=
+    "<b>直前の申請</b><br>"+
+    "業者:"+data.company+"<br>"+
+    "船番:"+data.ship+"<br>"+
+    "ブロック:"+data.block+"<br>"+
+    "区画:"+data.area+"<br>"+
+    "日付:"+data.date+" "+data.time+"<br>"+
+    "場所:"+data.place+"<br>"+
+    "備考:"+(data.note || "（なし）");
+}
+
+/* 送信処理 */
+sendBtn.addEventListener("click",async()=>{
+  const data={
+    company:company.value.trim(),
+    ship:"SA"+ship.value.trim(),
+    block:block.value.trim(),
+    area:area.value,
+    date:date.value,
+    time:time.value,
+    place:place.value,
+    note:note.value.trim()
+  };
+
+  /* 必須チェック（備考以外） */
+  if(!data.company || !ship.value.trim() || !data.block ||
+     !data.area || !data.date || !data.time || !data.place){
+    status.textContent="未入力があります";
+    return;
   }
 
-  const formData = new FormData(form);
+  const hash=JSON.stringify(data);
+  if(localStorage.getItem("lastHash")===hash){
+    status.textContent="同じ内容が既に送信されています";
+    return;
+  }
 
-  fetch(GAS_URL, {
-    method: "POST",
-    body: formData
-  })
-  .then(() => {
-    alert("申請完了しました");
-    form.reset();
-  })
-  .catch(() => {
-    alert("申請失敗");
-  });
+  lockUI(true);
+  status.textContent="送信中…";
+
+  try{
+    await fetch(GAS_URL,{
+      method:"POST",
+      mode:"no-cors",
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(data)
+    });
+
+    localStorage.setItem("lastHash",hash);
+    status.textContent="送信完了";
+    showLast(data);
+    document.querySelectorAll("input,textarea").forEach(e=>e.value="");
+
+  }catch(e){
+    status.textContent="送信失敗";
+  }
+
+  lockUI(false);
 });
 </script>
 
